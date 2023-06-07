@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, type UseFormHandleSubmit } from "react-hook-form";
 import { useMultiForm } from "./lib";
 
@@ -6,8 +6,13 @@ export default function App() {
   const multiForm = useMultiForm<PersonWithExtraType>((values) =>
     alert(JSON.stringify(values, null, 2))
   );
+  const [checked, setChecked] = useState<boolean>(false);
   return (
     <form onSubmit={multiForm.onSubmit}>
+      <label>
+        <input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} />
+        Unnecessary checkbox to check re-render optimization
+      </label>
       <p>
         <PersonForm setHandleSubmit={multiForm.register("person")} />
       </p>
@@ -56,7 +61,10 @@ function ExtraForm({
     shouldUseNativeValidation: true,
   });
   useEffect(
-    () => setHandleSubmit(handleSubmit),
+    () => {
+      console.log('yyyy')
+      setHandleSubmit(handleSubmit)
+    },
     [handleSubmit, setHandleSubmit]
   );
   return (

@@ -14,6 +14,9 @@ export function useMultiForm<T extends Record<string, FieldValues>>(
   >(new Map());
   const dataRef = useRef<Partial<T>>({});
   const isErrorRef = useRef<boolean>(false);
+  const setHandleSubmitRef = useRef<
+    Map<keyof T, (handleSubmit: UseFormHandleSubmit<T[keyof T]>) => () => void>
+  >(new Map());
 
   return {
     onSubmit: async (event) => {
@@ -29,19 +32,26 @@ export function useMultiForm<T extends Record<string, FieldValues>>(
         onValid(dataRef.current);
       }
     },
-    register: (name) => (handleSubmit) => {
-      const onSubmit = handleSubmit(
-        (data) => {
-          dataRef.current[name] = data;
-        },
-        () => {
-          isErrorRef.current = true;
-        }
-      );
-      handlersRef.current.set(name, onSubmit);
-      return () => {
-        handlersRef.current.delete(name);
-      };
+    register: (name) => {
+      let setHandleSubmit = setHandleSubmitRef.current.get(name);
+      if (!setHandleSubmit) {
+        setHandleSubmit = (handleSubmit) => {
+          const onSubmit = handleSubmit(
+            (data) => {
+              dataRef.current[name] = data;
+            },
+            () => {
+              isErrorRef.current = true;
+            }
+          );
+          handlersRef.current.set(name, onSubmit);
+          return () => {
+            handlersRef.current.delete(name);
+          };
+        };
+        setHandleSubmitRef.current.set(name, setHandleSubmit);
+      }
+      return setHandleSubmit;
     },
   };
 }
